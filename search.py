@@ -38,12 +38,18 @@ def read_fasta(filename):
 
 
 def read_2bit(filename):
+    tbf = TwoBitFile(filename)
+    table = defaultdict(list)
+    for (chrom, dna) in tbf.items():
+        chrom_table = create_hash_table(str(dna), chrom)
+        for (key, value) in chrom_table.items():
+            table[key] += value
 
-    return create_hash_table(get_dna_from2bit(filename))
+    return table
 
 
-def get_dna_from2bit(filename):
-    return str(TwoBitFile(filename)['chr1'])
+#def get_dna_from2bit(filename):
+    #return str(TwoBitFile(filename)['chr1'])
 
 #        for record in SeqIO.parse(handle, 'fasta'):
 #            print(record.id)
@@ -55,7 +61,7 @@ def rotate_key(k, new_letter):
     return k >> 2
 
 
-def create_hash_table(dna):
+def create_hash_table(dna, chrom):
     table = defaultdict(list)
     reduced = down_sample(dna)
     k = None
@@ -67,7 +73,7 @@ def create_hash_table(dna):
             else:
                 k = rotate_key(k, key[-1])
 
-            table[k].append(i)
+            table[k].append((i, chrom))
         else:
             k = None
     return table
@@ -102,7 +108,8 @@ def match_dna(table, query):
 
 def check_candidate_match(position, query):
     # seek to file
-    ref = reference["chr1"][position:position + len(query)]
+    (idx, chrom) = position
+    ref = reference[chrom][idx:idx + len(query)]
     #print("ref: {}\nqry: {}".format(ref, query))
     if ref == query:
         #print("They match")
@@ -125,11 +132,11 @@ def read_table_from(filename):
 def main():
     start_time = time.time()
     #table = read_fasta("chr1.fa")
-    #table = read_2bit("chr1.2bit")
+    table = read_2bit("GRCh38_no_alts.2bit")
     table_time = time.time()
-    #write_table_to(table, "chr1.index.pickle.gz")
+    write_table_to(table, "GRCh38_no_alts.index.pickle.gz")
     write_table_time = time.time()
-    table = read_table_from("chr1.index.pickle.gz")
+    table = read_table_from("GRCh38_no_alts.index.pickle.gz")
     read_table_time = time.time()
     # query = "CCACCTGTACATGCTATCTGAAGGACAGCCTCCAGGGCACACAGAGGATGGTATTTACACATGCACACATGGCTACTGATGGGGCAAGCACTTCACAACCCCTCATGATCACGTGCAGCAGACAATGTGGCCTCTGCAGAGGGGGAACGGAGACCGGAGGCTGAGACTGGCAAGGCTGGACCTGAGTGTCGTCACCTAAATTCAGACGGG"
     query = "GTAATCTTAGCACTTTGGGAGGCGGAGACGGATGTATCGCTTGAGCTCAGGAGTTGAAGACCAGCCTGGGCAACATACTGAGACTCCGTCTTGTATAATTTAATTAAAATTTAAAAAAAGAAGAGAAAAAGACCTGTGTT"
