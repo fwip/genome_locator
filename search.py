@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 
-from Bio import SeqIO
-from collections import defaultdict
+# Reference::::
+# Bioinformatics. 2010 Sep 15; 26(18): i414–i419.  Published online 2010 Sep 4. doi:  10.1093/bioinformatics/btq364
+# PMCID: PMC2935425
+# A fast algorithm for exact sequence search in biological sequences using
+# polyphase decomposition
 
+
+from collections import defaultdict
 from twobitreader import TwoBitFile
 
 import gzip
@@ -13,8 +18,8 @@ import time
 M = 7
 Q = 13
 
-# reference = TwoBitFile("GRCh38_no_alts.2bit")
-reference = TwoBitFile("GRCh38_no_alts.2bit")
+genome_name = "GRCh38_no_alts"
+reference = TwoBitFile("%s.2bit" % genome_name)
 
 base_lookup = {
     'A': 0,
@@ -22,12 +27,6 @@ base_lookup = {
     'T': 2,
     'C': 3,
 }
-
-# Reference::::
-# Bioinformatics. 2010 Sep 15; 26(18): i414–i419.  Published online 2010 Sep 4. doi:  10.1093/bioinformatics/btq364
-# PMCID: PMC2935425
-# A fast algorithm for exact sequence search in biological sequences using
-# polyphase decomposition
 
 
 def read_fasta(filename):
@@ -39,21 +38,12 @@ def read_fasta(filename):
 
 def read_2bit(filename):
     tbf = TwoBitFile(filename)
-    table = defaultdict(list)
+    table = {}
     for (chrom, dna) in tbf.items():
-        chrom_table = create_hash_table(str(dna), chrom)
-        for (key, value) in chrom_table.items():
-            table[key] += value
+        chrom_table = create_hash_table(str(dna))
+        table[chrom] = chrom_table
 
     return table
-
-
-#def get_dna_from2bit(filename):
-    #return str(TwoBitFile(filename)['chr1'])
-
-#        for record in SeqIO.parse(handle, 'fasta'):
-#            print(record.id)
-#            return create_hash_table(record.seq._data)
 
 
 def rotate_key(k, new_letter):
@@ -61,7 +51,7 @@ def rotate_key(k, new_letter):
     return k >> 2
 
 
-def create_hash_table(dna, chrom):
+def create_hash_table(dna):
     table = defaultdict(list)
     reduced = down_sample(dna)
     k = None
@@ -73,7 +63,7 @@ def create_hash_table(dna, chrom):
             else:
                 k = rotate_key(k, key[-1])
 
-            table[k].append((i, chrom))
+            table[k].append(i)
         else:
             k = None
     return table
@@ -84,7 +74,6 @@ def down_sample(dna, step=M):
 
 
 def encode(dna):
-    # return dna
     val = 0
     for i, c in enumerate(dna.upper()):
         x = base_lookup[c]
@@ -98,24 +87,20 @@ def match_dna(table, query):
     all_candidates = []
     for i in range(Q):
         key = encode(down_sample(query[i:])[:Q])
-        if key in table:
-            candidates = [(x - i) * M for x in table[key]]
-            all_candidates += candidates
+        for (chrom, subtable) in table.items():
+            if key in subtable:
+                candidates = [(chrom, (x - i) * M) for x in subtable[key]]
+                all_candidates += candidates
 
-    # print("Candidates:", candidates)
     return [c for c in all_candidates if check_candidate_match(c, query)]
 
 
 def check_candidate_match(position, query):
     # seek to file
-    (idx, chrom) = position
+    chrom = position[0]
+    idx = position[1]
     ref = reference[chrom][idx:idx + len(query)]
-    #print("ref: {}\nqry: {}".format(ref, query))
-    if ref == query:
-        #print("They match")
-        return True
-    #print("No match")
-    return False
+    return ref == query
 
 
 def write_table_to(table, filename):
@@ -131,21 +116,19 @@ def read_table_from(filename):
 
 def main():
     start_time = time.time()
-    #table = read_fasta("chr1.fa")
-    table = read_2bit("GRCh38_no_alts.2bit")
+    table = read_2bit("%s.2bit" % genome_name)
     table_time = time.time()
-    write_table_to(table, "GRCh38_no_alts.index.pickle.gz")
+    write_table_to(table, "%s.index.pickle.gz" % genome_name)
     write_table_time = time.time()
-    table = read_table_from("GRCh38_no_alts.index.pickle.gz")
+    table = read_table_from("%s.index.pickle.gz" % genome_name)
     read_table_time = time.time()
-    # query = "CCACCTGTACATGCTATCTGAAGGACAGCCTCCAGGGCACACAGAGGATGGTATTTACACATGCACACATGGCTACTGATGGGGCAAGCACTTCACAACCCCTCATGATCACGTGCAGCAGACAATGTGGCCTCTGCAGAGGGGGAACGGAGACCGGAGGCTGAGACTGGCAAGGCTGGACCTGAGTGTCGTCACCTAAATTCAGACGGG"
     query = "GTAATCTTAGCACTTTGGGAGGCGGAGACGGATGTATCGCTTGAGCTCAGGAGTTGAAGACCAGCCTGGGCAACATACTGAGACTCCGTCTTGTATAATTTAATTAAAATTTAAAAAAAGAAGAGAAAAAGACCTGTGTT"
 
     matchCount = 1
     matches = []
     for i in range(matchCount):
         matches = match_dna(table, query)
-        # print(matches)
+        print(matches)
     match_time = time.time()
     print(matches)
 
