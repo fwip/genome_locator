@@ -10,13 +10,14 @@
 from collections import defaultdict
 from twobitreader import TwoBitFile
 
+import gc
 import gzip
 import pickle
 import pickletools
 import time
 
-M = 7
-Q = 13
+M = 10
+Q = 10
 
 genome_name = "GRCh38_no_alts"
 reference = TwoBitFile("%s.2bit" % genome_name)
@@ -28,6 +29,17 @@ base_lookup = {
     'C': 3,
 }
 
+last_time = time.time()
+
+
+def elapsed():
+    global last_time
+    new_time = time.time()
+    diff = new_time - last_time
+    last_time = new_time
+    return diff
+
+# gc.set_debug(gc.DEBUG_LEAK)
 
 def read_fasta(filename):
     with open(filename, "rU") as handle:
@@ -37,13 +49,21 @@ def read_fasta(filename):
 
 
 def read_2bit(filename):
-    tbf = TwoBitFile(filename)
     table = {}
+    tbf = TwoBitFile(filename)
     for (chrom, dna) in tbf.items():
-        chrom_table = create_hash_table(str(dna))
-        table[chrom] = chrom_table
+        print("Chrom:", chrom, elapsed())
+        table[chrom] = get_table_for_chrom(filename, chrom)
+        # print("Got table", elapsed())
+        # gc.collect()
+        # print(gc.garbage)
 
     return table
+
+
+def get_table_for_chrom(filename, chrom):
+        tbf = TwoBitFile(filename)
+        return create_hash_table(tbf[chrom])
 
 
 def rotate_key(k, new_letter):
@@ -52,6 +72,8 @@ def rotate_key(k, new_letter):
 
 
 def create_hash_table(dna):
+    dna = str(dna)
+    print("Read dna", elapsed())
     table = defaultdict(list)
     reduced = down_sample(dna)
     k = None
@@ -104,13 +126,14 @@ def check_candidate_match(position, query):
 
 
 def write_table_to(table, filename):
-    with gzip.open(filename, 'wb') as handle:
+    print("Writing to", filename)
+    with open(filename, 'wb') as handle:
         # handle.write(pickletools.optimize(pickle.dumps(table)))
         pickle.dump(table, handle)
 
 
 def read_table_from(filename):
-    with gzip.open(filename, 'rb') as handle:
+    with open(filename, 'rb') as handle:
         return pickle.load(handle)
 
 
@@ -118,9 +141,9 @@ def main():
     start_time = time.time()
     table = read_2bit("%s.2bit" % genome_name)
     table_time = time.time()
-    write_table_to(table, "%s.index.pickle.gz" % genome_name)
+    write_table_to(table, "%s.index.pickle" % genome_name)
     write_table_time = time.time()
-    table = read_table_from("%s.index.pickle.gz" % genome_name)
+    table = read_table_from("%s.index.pickle" % genome_name)
     read_table_time = time.time()
     query = "GTAATCTTAGCACTTTGGGAGGCGGAGACGGATGTATCGCTTGAGCTCAGGAGTTGAAGACCAGCCTGGGCAACATACTGAGACTCCGTCTTGTATAATTTAATTAAAATTTAAAAAAAGAAGAGAAAAAGACCTGTGTT"
 
