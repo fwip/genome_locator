@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # Reference::::
-# Bioinformatics. 2010 Sep 15; 26(18): i414–i419.  Published online 2010 Sep 4. doi:  10.1093/bioinformatics/btq364
+# Bioinformatics. 2010 Sep 15; 26(18): i414-i419.  Published online 2010 Sep 4. doi:  10.1093/bioinformatics/btq364
 # PMCID: PMC2935425
 # A fast algorithm for exact sequence search in biological sequences using
 # polyphase decomposition
@@ -10,7 +10,9 @@
 from collections import defaultdict
 from twobitreader import TwoBitFile
 
+from lookup_hash import LookupHash
 import pickle
+import pickletools
 import time
 
 M = 10
@@ -49,7 +51,10 @@ def read_2bit(filename):
 
 def get_table_for_chrom(filename, chrom):
         tbf = TwoBitFile(filename)
-        return create_hash_table(tbf[chrom])
+        table = create_hash_table(tbf[chrom])
+        lh = LookupHash(table)
+        print("Converted to lookuphash", elapsed())
+        return lh
 
 
 def rotate_key(k, new_letter):
@@ -114,8 +119,14 @@ def check_candidate_match(position, query):
 def write_table_to(table, filename):
     print("Writing to", filename)
     with open(filename, 'wb') as handle:
-        # handle.write(pickletools.optimize(pickle.dumps(table)))
-        pickle.dump(table, handle)
+        dump = pickle.dumps(table)
+        print("Dumped", elapsed())
+        optimized = pickletools.optimize(dump)
+        print("Optimized", elapsed())
+        #handle.write(pickletools.optimize(pickle.dumps(table)))
+        handle.write(optimized)
+        print("Wrote", elapsed())
+        # pickle.dump(table, handle)
 
 
 def read_table_from(filename):
