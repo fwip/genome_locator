@@ -10,10 +10,7 @@
 from collections import defaultdict
 from twobitreader import TwoBitFile
 
-import gc
-import gzip
 import pickle
-import pickletools
 import time
 
 M = 10
@@ -39,14 +36,6 @@ def elapsed():
     last_time = new_time
     return diff
 
-# gc.set_debug(gc.DEBUG_LEAK)
-
-def read_fasta(filename):
-    with open(filename, "rU") as handle:
-        for record in SeqIO.parse(handle, 'fasta'):
-            print(record.id)
-            return create_hash_table(record.seq._data)
-
 
 def read_2bit(filename):
     table = {}
@@ -54,9 +43,6 @@ def read_2bit(filename):
     for (chrom, dna) in tbf.items():
         print("Chrom:", chrom, elapsed())
         table[chrom] = get_table_for_chrom(filename, chrom)
-        # print("Got table", elapsed())
-        # gc.collect()
-        # print(gc.garbage)
 
     return table
 
@@ -165,4 +151,5 @@ def main():
            ]))
 
 
-main()
+if __name__ == "__main__":
+    main()

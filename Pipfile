@@ -7,8 +7,8 @@ name = "pypi"
 
 [packages]
 
-biopython = "*"
 twobitreader = "*"
+Flask = "*"
 
 
 [dev-packages]
