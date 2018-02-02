@@ -9,7 +9,7 @@ app = Flask(__name__)
 search.reference = TwoBitFile("GRCh38_no_alts.2bit")
 
 table = {
-    chrom: search.read_table_from("{}.M10.Q10.index".format(chrom))
+    chrom: search.read_table_from("{}.M10.Q10.index.gz".format(chrom))
     for chrom in search.reference.keys()
 }
 

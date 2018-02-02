@@ -12,10 +12,12 @@
 from collections import defaultdict
 from twobitreader import TwoBitFile
 
-from lookup_hash import LookupHash
+import gzip
 import pickle
 import pickletools
 import time
+
+from lookup_hash import LookupHash
 
 M = 10
 Q = 10
@@ -133,7 +135,7 @@ def check_candidate_match(position, query):
 
 def write_table_to(table, filename):
     print("Writing to", filename)
-    with open(filename, 'wb') as handle:
+    with gzip.open(filename, 'wb') as handle:
         dump = pickle.dumps(table)
         print("Dumped", elapsed())
         optimized = pickletools.optimize(dump)
@@ -143,7 +145,7 @@ def write_table_to(table, filename):
 
 
 def read_table_from(filename):
-    with open(filename, 'rb') as handle:
+    with gzip.open(filename, 'rb') as handle:
         return pickle.load(handle)
 
 
