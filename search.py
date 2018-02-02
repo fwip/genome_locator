@@ -66,7 +66,7 @@ def write_tables_from_2bit(filename):
     for (chrom, dna) in tbf.items():
         print("Chrom", chrom)
         table = get_table_for_chrom(filename, chrom)
-        outfile = "{}.M{}.Q{}.index".format(chrom, M, Q)
+        outfile = "{}.M{}.Q{}.index.gz".format(chrom, M, Q)
         write_table_to(table, outfile)
 
 

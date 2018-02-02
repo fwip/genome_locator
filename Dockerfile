@@ -12,6 +12,8 @@ ENV LC_ALL=C.UTF-8 \
 
 RUN ./build.py GRCh38_no_alts.2bit 10 10
 
-ENV FLASKAPP=run.py
+ENV FLASK_APP=run.py
 
-CMD flask run
+EXPOSE 5000
+
+CMD flask run -h 0.0.0.0 -p 5000
