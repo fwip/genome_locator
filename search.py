@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 # Reference::::
-# Bioinformatics. 2010 Sep 15; 26(18): i414-i419.  Published online 2010 Sep 4. doi:  10.1093/bioinformatics/btq364
+# Bioinformatics. 2010 Sep 15; 26(18): i414-i419.
+# Published online 2010 Sep 4.
+# doi:  10.1093/bioinformatics/btq364
 # PMCID: PMC2935425
 # A fast algorithm for exact sequence search in biological sequences using
 # polyphase decomposition
@@ -50,11 +52,20 @@ def read_2bit(filename):
 
 
 def get_table_for_chrom(filename, chrom):
-        tbf = TwoBitFile(filename)
-        table = create_hash_table(tbf[chrom])
-        lh = LookupHash(table)
-        print("Converted to lookuphash", elapsed())
-        return lh
+    tbf = TwoBitFile(filename)
+    table = create_hash_table(tbf[chrom])
+    lh = LookupHash(table)
+    print("Converted to lookuphash", elapsed())
+    return lh
+
+
+def write_tables_from_2bit(filename):
+    tbf = TwoBitFile(filename)
+    for (chrom, dna) in tbf.items():
+        print("Chrom", chrom)
+        table = get_table_for_chrom(filename, chrom)
+        outfile = "{}.M{}.Q{}.index".format(chrom, M, Q)
+        write_table_to(table, outfile)
 
 
 def rotate_key(k, new_letter):
@@ -105,7 +116,11 @@ def match_dna(table, query):
                 candidates = [(chrom, (x - i) * M) for x in subtable[key]]
                 all_candidates += candidates
 
-    return [(c[0], c[1]+1) for c in all_candidates if check_candidate_match(c, query)]
+    return [
+        (c[0], c[1] + 1)
+        for c in all_candidates
+        if check_candidate_match(c, query)
+    ]
 
 
 def check_candidate_match(position, query):
@@ -123,10 +138,8 @@ def write_table_to(table, filename):
         print("Dumped", elapsed())
         optimized = pickletools.optimize(dump)
         print("Optimized", elapsed())
-        #handle.write(pickletools.optimize(pickle.dumps(table)))
         handle.write(optimized)
         print("Wrote", elapsed())
-        # pickle.dump(table, handle)
 
 
 def read_table_from(filename):

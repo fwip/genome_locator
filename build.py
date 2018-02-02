@@ -5,12 +5,11 @@ import sys
 import search
 
 
-def main(infile, M, Q, outputfile):
+def main(infile, M, Q):
     search.M = M
     search.Q = Q
 
-    table = search.read_2bit(infile)
-    search.write_table_to(table, outputfile)
+    search.write_tables_from_2bit(infile)
 
 
 if __name__ == "__main__":
@@ -19,5 +18,4 @@ if __name__ == "__main__":
     infile = sys.argv[1]
     M = int(sys.argv[2])
     Q = int(sys.argv[3])
-    outfile = "{root}.M{M}.Q{Q}.index".format(root=infile, M=M, Q=Q)
-    main(infile, M, Q, outfile)
+    main(infile, M, Q)

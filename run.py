@@ -1,26 +1,26 @@
 # hello_world.py
-
-from search import read_table_from, match_dna
-
 from flask import Flask, request, jsonify
+from twobitreader import TwoBitFile
+
+import search
 app = Flask(__name__)
 
 
-table = read_table_from("GRCh38_no_alts.2bit.M10.Q10.index")
+search.reference = TwoBitFile("GRCh38_no_alts.2bit")
 
-
-@app.route('/')
-def hello_world():
-    return 'Hello World!'
+table = {
+    chrom: search.read_table_from("{}.M10.Q10.index".format(chrom))
+    for chrom in search.reference.keys()
+}
 
 
 @app.route('/search/')
-def search():
-    query = "GTAATCTTAGCACTTTGGGAGGCGGAGACGGATGTATCGCTTGAGCTCAGGAGTTGAAGACCAGCCTGGGCAACATACTGAGACTCCGTCTTGTATAATTTAATTAAAATTTAAAAAAAGAAGAGAAAAAGACCTGTGTT"
+def search_for_needle():
+    query = ""
     if 'query' in request.args:
         query = request.args['query']
     return jsonify([{
         "chromosome": match[0],
         "start": match[1],
         "end": match[1] + len(query),
-    } for match in match_dna(table, query)])
+    } for match in search.match_dna(table, query)])
