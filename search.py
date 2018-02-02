@@ -105,7 +105,7 @@ def match_dna(table, query):
                 candidates = [(chrom, (x - i) * M) for x in subtable[key]]
                 all_candidates += candidates
 
-    return [c for c in all_candidates if check_candidate_match(c, query)]
+    return [(c[0], c[1]+1) for c in all_candidates if check_candidate_match(c, query)]
 
 
 def check_candidate_match(position, query):

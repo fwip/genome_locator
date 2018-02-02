@@ -8,7 +8,8 @@ name = "pypi"
 [packages]
 
 twobitreader = "*"
-Flask = "*"
+flask = "*"
+numpy = "*"
 
 
 [dev-packages]
