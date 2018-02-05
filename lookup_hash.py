@@ -11,8 +11,13 @@ class LookupHash(object):
     offsets = []
     counts = []
 
-    def __init__(self, table):
-        self.import_table(table)
+    def __init__(self, table=None, h5_group=None):
+        if table is not None:
+            self.import_table(table)
+        if h5_group is not None:
+            self.positions = h5_group['positions']
+            self.offsets = h5_group['offsets']
+            self.counts = h5_group['counts']
 
     def keys(self):
         return [i for i in range(len(self.counts)) if self.counts[i] != 0]
@@ -27,6 +32,7 @@ class LookupHash(object):
         count = self.counts[key]
 
         return [int(x) for x in self.positions[offset:offset+count]]
+
 
     @staticmethod
     def init_array(length, maximum):
@@ -53,7 +59,7 @@ class LookupHash(object):
         # If we've got very sparse buckets, dicts will be more size-optimal
         occupancy = 1.0 * len(table.keys()) / array_len
         print("Occupancy is", occupancy)
-        if occupancy < 0.25:
+        if False and occupancy < 0.25:
             self.offsets = {}
             self.counts = {}
         else:

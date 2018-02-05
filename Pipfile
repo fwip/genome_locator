@@ -9,7 +9,8 @@ name = "pypi"
 
 twobitreader = "*"
 flask = "*"
-numpy = "*"
+numpy = "==1.13.3"
+"h5py" = "*"
 
 
 [dev-packages]

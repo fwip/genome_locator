@@ -3,3 +3,4 @@
 *.index.gz
 *.pickle
 *.2bit
+*.hdf5

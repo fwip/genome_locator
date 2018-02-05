@@ -11,6 +11,7 @@
 
 from collections import defaultdict
 from twobitreader import TwoBitFile
+import h5py
 
 import gzip
 import pickle
@@ -61,13 +62,18 @@ def get_table_for_chrom(filename, chrom):
     return lh
 
 
-def write_tables_from_2bit(filename):
+def write_tables_from_2bit(filename, outname=None):
     tbf = TwoBitFile(filename)
+    if outname is None:
+        outname = "{}.M{}.Q{}.index.hdf5".format(filename, M, Q)
+    h5_file = h5py.File(outname, "w")
     for (chrom, dna) in tbf.items():
         print("Chrom", chrom)
         table = get_table_for_chrom(filename, chrom)
-        outfile = "{}.M{}.Q{}.index.gz".format(chrom, M, Q)
-        write_table_to(table, outfile)
+        # outfile = "{}.M{}.Q{}.index.gz".format(chrom, M, Q)
+        # write_table_to(table, outfile)
+        write_chrom_h5(table, chrom, h5_file)
+    h5_file.close()
 
 
 def rotate_key(k, new_letter):
@@ -133,6 +139,17 @@ def check_candidate_match(position, query):
     return ref == query
 
 
+def write_chrom_h5(table, chrom_name, h5file):
+    group = h5file.require_group("chromosomes").create_group(chrom_name)
+    group.create_dataset("offsets", compression="gzip",
+                         shuffle=True, data=table.offsets)
+    group.create_dataset("counts", compression="gzip",
+                         shuffle=True, data=table.counts)
+    group.create_dataset("positions", compression="gzip",
+                         shuffle=True, data=table.positions)
+    print("Wrote hdf5", elapsed())
+
+
 def write_table_to(table, filename):
     print("Writing to", filename)
     with gzip.open(filename, 'wb') as handle:
@@ -142,6 +159,14 @@ def write_table_to(table, filename):
         print("Optimized", elapsed())
         handle.write(optimized)
         print("Wrote", elapsed())
+
+
+def read_table_from_h5(filename):
+    chroms = h5py.File(filename)['chromosomes']
+    return {
+        chrom: LookupHash(h5_group=chroms[chrom])
+        for chrom in chroms.keys()
+    }
 
 
 def read_table_from(filename):
