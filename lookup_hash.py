@@ -46,6 +46,7 @@ class LookupHash(object):
         list_len = sum(len(v) for v in table.values())
         max_list = max(max(v) for v in table.values())
         array_len = max(table.keys()) + 1
+        len_max = max(len(v) for v in table.values())
 
         self.positions = LookupHash.init_array(list_len, max_list)
 
@@ -56,8 +57,8 @@ class LookupHash(object):
             self.offsets = {}
             self.counts = {}
         else:
-            self.offsets = LookupHash.init_array(array_len, array_len)
-            self.counts = LookupHash.init_array(array_len, array_len)
+            self.offsets = LookupHash.init_array(array_len, list_len)
+            self.counts = LookupHash.init_array(array_len, len_max)
 
         for (key, value) in table.items():
             entry_count = len(value)
