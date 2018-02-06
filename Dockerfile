@@ -4,7 +4,7 @@ COPY GRCh38_no_alts.2bit /
 
 COPY requirements.txt /
 RUN pip3 install -r requirements.txt
-COPY *py /
+COPY build.py lookup_hash.py search.py /
 
 ENV LC_ALL=C.UTF-8 \
     LANG=C.UTF-8 \
@@ -12,6 +12,7 @@ ENV LC_ALL=C.UTF-8 \
 
 RUN ./build.py GRCh38_no_alts.2bit 10 10
 
+COPY run.py /
 ENV FLASK_APP=run.py
 
 EXPOSE 5000

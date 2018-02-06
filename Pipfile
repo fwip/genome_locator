@@ -11,7 +11,10 @@ twobitreader = "*"
 flask = "*"
 numpy = "==1.13.3"
 "h5py" = "*"
+pyopenssl = "*"
 
 
 [dev-packages]
 
+pytest = "*"
+pytest-benchmark = "*"

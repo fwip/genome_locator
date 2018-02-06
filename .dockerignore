@@ -1,4 +1,4 @@
 *.fa
-*.index
+*.index*
 *.gz
 *.tar
