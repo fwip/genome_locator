@@ -59,6 +59,9 @@ class LookupHash(object):
         # If we've got very sparse buckets, dicts will be more size-optimal
         occupancy = 1.0 * len(table.keys()) / array_len
         print("Occupancy is", occupancy)
+        print("position len is", list_len)
+        print("offset len is", array_len)
+        print("Avg bucket count is", list_len / len(table.keys()))
         if False and occupancy < 0.25:
             self.offsets = {}
             self.counts = {}

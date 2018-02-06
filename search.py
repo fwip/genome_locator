@@ -113,6 +113,18 @@ def encode(dna):
     return val
 
 
+def match_file(filename, query):
+    f = h5py.File(filename)
+    chroms = f['chromosomes']
+    table = {
+        chrom: LookupHash(h5_group=chroms[chrom])
+        for chrom in chroms.keys()
+    }
+    results = match_dna(table, query)
+    f.close()
+    return results
+
+
 def match_dna(table, query):
     if len(query) < M * Q:
         raise Exception("Query must be at least %d characters" % M * Q)
