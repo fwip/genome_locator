@@ -1,8 +1,8 @@
-#/usr/bin/env python3
+#!/usr/bin/env python3
 from flask import Flask, request, jsonify
 from twobitreader import TwoBitFile
 
-import search
+from genome_locator import search
 
 app = Flask(__name__)
 search.reference = TwoBitFile("GRCh38_no_alts.2bit")

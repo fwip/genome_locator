@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
-# from search import read_2bit, write_table_to, M, Q
-import search
+from genome_locator import search
 
 
 def main(infile, M, Q):
