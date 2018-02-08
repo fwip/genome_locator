@@ -1,0 +1,25 @@
+---
+version: '2'
+services:
+  web:
+    image: nginx
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./nginx.conf/genomelocator.conf:/etc/nginx/nginx.conf:ro
+      - ./certs/:/etc/nginx/certs/
+    command: [nginx, '-g', 'daemon off;']
+    networks:
+      - my_net
+
+  flask:
+    build: .
+    expose:
+      - 5000
+    networks:
+      - my_net
+
+networks:
+  my_net:
+    internal: true

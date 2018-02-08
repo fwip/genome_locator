@@ -18,7 +18,7 @@ import pickle
 import pickletools
 import time
 
-from genome_locator.lookup_hash import LookupHash
+from lookup_hash import LookupHash
 
 M = 10
 Q = 10

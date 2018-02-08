@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
-from genome_locator import search
+import search
 
 
 def main(infile, M, Q):
@@ -14,6 +14,7 @@ def main(infile, M, Q):
 if __name__ == "__main__":
     if len(sys.argv) != 4:
         print("Usage: build.py infile M Q")
+        sys.exit(2)
     infile = sys.argv[1]
     M = int(sys.argv[2])
     Q = int(sys.argv[3])

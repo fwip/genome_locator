@@ -1,20 +1,19 @@
 FROM python:3.6.4
 
-COPY GRCh38_no_alts.2bit /
+RUN useradd -m -U flask
+USER flask:flask
+WORKDIR /home/flask/
 
-COPY requirements.txt /
-RUN pip3 install -r requirements.txt
-COPY build.py lookup_hash.py search.py /
+COPY GRCh38_no_alts.2bit .
+COPY requirements.txt .
+RUN pip3 install --user -r requirements.txt
+COPY build_genome_index.py search.py lookup_hash.py ./
 
-ENV LC_ALL=C.UTF-8 \
-    LANG=C.UTF-8 \
-    PIPENV_HIDE_EMOJIS=1
+RUN ./build_genome_index.py GRCh38_no_alts.2bit 10 10
 
-RUN ./build.py GRCh38_no_alts.2bit 10 10
-
-COPY run.py /
+COPY run.py .
 ENV FLASK_APP=run.py
 
 EXPOSE 5000
 
-CMD flask run -h 0.0.0.0 -p 5000
+CMD ./run.py -h 0.0.0.0 -p 5000

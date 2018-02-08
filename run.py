@@ -2,7 +2,7 @@
 from flask import Flask, request, jsonify
 from twobitreader import TwoBitFile
 
-from genome_locator import search
+import search
 
 app = Flask(__name__)
 search.reference = TwoBitFile("GRCh38_no_alts.2bit")
