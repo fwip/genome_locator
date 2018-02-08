@@ -1,25 +1,34 @@
 ---
-version: '2'
+version: '3'
 services:
   web:
-    image: nginx
+    # image: nginx
+    build: nginx/
     ports:
-      - 80:80
-      - 443:443
-    volumes:
-      - ./nginx.conf/genomelocator.conf:/etc/nginx/nginx.conf:ro
-      - ./certs/:/etc/nginx/certs/
-    command: [nginx, '-g', 'daemon off;']
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+    # volumes:
+    #  - /home/flask/nginx.conf/genomelocator.conf:/etc/nginx/conf.d/:ro
+    #  - /home/flask/certs/:/etc/nginx/certs/
+    # command: [nginx, '-g', 'daemon off;']
     networks:
       - my_net
+      - ext
+    links:
+      - genomelocator:genomelocator
 
-  flask:
+  genomelocator:
     build: .
     expose:
       - 5000
+    ports:
+      - "0.0.0.0:5000:5000"
     networks:
       - my_net
 
 networks:
   my_net:
     internal: true
+  ext:
+    internal: false
+

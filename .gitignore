@@ -4,3 +4,5 @@
 *.pickle
 *.2bit
 *.hdf5
+
+nginx/certs/

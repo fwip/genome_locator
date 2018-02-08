@@ -2,3 +2,5 @@
 *.index*
 *.gz
 *.tar
+
+!GRCh38_no_alts.2bit.M10.Q10.index.hdf5
