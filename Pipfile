@@ -12,7 +12,6 @@ flask = "*"
 numpy = "==1.13.3"
 "h5py" = "*"
 pyopenssl = "*"
-flask-cors = "*"
 
 
 [dev-packages]
