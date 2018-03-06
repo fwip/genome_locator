@@ -69,22 +69,26 @@ def write_tables_from_2bit(filename, outname=None):
     # tbf = TwoBitFile(filename)
     if outname is None:
         outname = "{}.M{}.Q{}.index.hdf5".format(filename, M, Q)
-    h5_file = h5py.File(outname, "w")
     # for (chrom, dna) in tbf.items():
     offset = 0
     master_table = defaultdict(list)
     for (chrom, length) in chroms:
         print("Chrom", chrom)
         #table = get_table_for_chrom(filename, chrom)
-        table = create_hash_table(TwoBitFile(filename)[chrom], offset)
-        for (k, v) in table.items():
-            master_table[k] += v
+        create_hash_table(TwoBitFile(filename)[chrom], table=master_table, offset=offset)
+        #for (k, v) in table.items():
+            #master_table[k] += v
+        print("Updated master table", elapsed())
         offset += length / M
         # outfile = "{}.M{}.Q{}.index.gz".format(chrom, M, Q)
         # write_table_to(table, outfile)
         # write_chrom_h5(table, chrom, h5_file)
-    write_h5(LookupHash(table=master_table), h5_file)
+    lh = LookupHash(table=master_table)
+    print("Created lookup hash", elapsed())
+    h5_file = h5py.File(outname, "w")
+    write_h5(lh, h5_file)
     h5_file.close()
+    print("Wrote h5 file", elapsed())
 
 
 def rotate_key(k, new_letter):
@@ -92,10 +96,12 @@ def rotate_key(k, new_letter):
     return k >> 2
 
 
-def create_hash_table(dna, offset=0):
+def create_hash_table(dna, table=None, offset=0):
+    if table is None:
+        table = defaultdict(list)
+
     dna = str(dna)
     print("Read dna", elapsed())
-    table = defaultdict(list)
     reduced = down_sample(dna)
     k = None
     for i in range(len(reduced) - Q + 1):
@@ -109,6 +115,7 @@ def create_hash_table(dna, offset=0):
             table[k].append(i+offset)
         else:
             k = None
+    print("Created table", elapsed())
     return table
 
 
@@ -238,6 +245,10 @@ def main():
 
     matchCount = 50
     matches = []
+    global M
+    global Q
+    M = 10
+    Q = 10
     for i in range(matchCount):
         # matches = match_dna(table, query)
         matches = match_file("GRCh38_no_alts.2bit.M10.Q10.index.hdf5", query)
