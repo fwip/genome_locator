@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 
 import numpy
-import struct
 
 
 class LookupHash(object):
 
     positions = []
-
     offsets = []
     counts = []
 
@@ -28,11 +26,12 @@ class LookupHash(object):
         return key < len(self.counts) and self.counts[key] != 0
 
     def __getitem__(self, key):
-        offset = self.offsets[key]
         count = self.counts[key]
+        if count == 0:
+            return []
+        offset = self.offsets[key]
 
         return [int(x) for x in self.positions[offset:offset+count]]
-
 
     @staticmethod
     def init_array(length, maximum):

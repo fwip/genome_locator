@@ -2,11 +2,13 @@
 
 import sys
 import search
+from twobitreader import TwoBitFile
 
 
 def main(infile, M, Q):
     search.M = M
     search.Q = Q
+    search.reference = TwoBitFile(infile)
 
     search.write_tables_from_2bit(infile)
 

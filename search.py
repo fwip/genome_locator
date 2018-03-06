@@ -26,6 +26,8 @@ Q = 10
 genome_name = "GRCh38_no_alts"
 reference = TwoBitFile("%s.2bit" % genome_name)
 
+chroms = []
+
 base_lookup = {
     'A': 0,
     'G': 1,
@@ -54,25 +56,34 @@ def read_2bit(filename):
     return table
 
 
-def get_table_for_chrom(filename, chrom):
+def get_table_for_chrom(filename, chrom, offset):
     tbf = TwoBitFile(filename)
-    table = create_hash_table(tbf[chrom])
+    table = create_hash_table(tbf[chrom], offset)
     lh = LookupHash(table)
     print("Converted to lookuphash", elapsed())
     return lh
 
 
 def write_tables_from_2bit(filename, outname=None):
-    tbf = TwoBitFile(filename)
+    init()
+    # tbf = TwoBitFile(filename)
     if outname is None:
         outname = "{}.M{}.Q{}.index.hdf5".format(filename, M, Q)
     h5_file = h5py.File(outname, "w")
-    for (chrom, dna) in tbf.items():
+    # for (chrom, dna) in tbf.items():
+    offset = 0
+    master_table = defaultdict(list)
+    for (chrom, length) in chroms:
         print("Chrom", chrom)
-        table = get_table_for_chrom(filename, chrom)
+        #table = get_table_for_chrom(filename, chrom)
+        table = create_hash_table(TwoBitFile(filename)[chrom], offset)
+        for (k, v) in table.items():
+            master_table[k] += v
+        offset += length / M
         # outfile = "{}.M{}.Q{}.index.gz".format(chrom, M, Q)
         # write_table_to(table, outfile)
-        write_chrom_h5(table, chrom, h5_file)
+        # write_chrom_h5(table, chrom, h5_file)
+    write_h5(LookupHash(table=master_table), h5_file)
     h5_file.close()
 
 
@@ -81,7 +92,7 @@ def rotate_key(k, new_letter):
     return k >> 2
 
 
-def create_hash_table(dna):
+def create_hash_table(dna, offset=0):
     dna = str(dna)
     print("Read dna", elapsed())
     table = defaultdict(list)
@@ -95,7 +106,7 @@ def create_hash_table(dna):
             else:
                 k = rotate_key(k, key[-1])
 
-            table[k].append(i)
+            table[k].append(i+offset)
         else:
             k = None
     return table
@@ -114,15 +125,26 @@ def encode(dna):
 
 
 def match_file(filename, query):
+    init()
     f = h5py.File(filename)
-    chroms = f['chromosomes']
-    table = {
-        chrom: LookupHash(h5_group=chroms[chrom])
-        for chrom in chroms.keys()
-    }
+    #chroms = f['chromosomes']
+    table = LookupHash(h5_group=f['index'])
+    #table = {
+    #    chrom: LookupHash(h5_group=chroms[chrom])
+    #    for chrom in chroms.keys()
+    #}
     results = match_dna(table, query)
     f.close()
     return results
+
+
+def deindex(idx):
+    for i in range(0, len(chroms)):
+        c, length = chroms[i]
+        if idx < length:
+            return (c, idx)
+        idx -= length
+    raise Exception("Something is wrong")
 
 
 def match_dna(table, query):
@@ -131,10 +153,10 @@ def match_dna(table, query):
     all_candidates = []
     for i in range(Q):
         key = encode(down_sample(query[i:])[:Q])
-        for (chrom, subtable) in table.items():
-            if key in subtable:
-                candidates = [(chrom, (x - i) * M) for x in subtable[key]]
-                all_candidates += candidates
+        #for (chrom, subtable) in table.items():
+        if key in table:
+            candidates = [deindex((x - i) * M) for x in table[key]]
+            all_candidates += candidates
 
     return [
         (c[0], c[1] + 1)
@@ -150,6 +172,16 @@ def check_candidate_match(position, query):
     ref = reference[chrom][idx:idx + len(query)]
     return ref == query
 
+
+def write_h5(table, h5file):
+    group = h5file.require_group("index")
+    group.create_dataset("offsets", compression="gzip",
+                         shuffle=True, data=table.offsets)
+    group.create_dataset("counts", compression="gzip",
+                         shuffle=True, data=table.counts)
+    group.create_dataset("positions", compression="gzip",
+                         shuffle=True, data=table.positions)
+    print("Wrote hdf5", elapsed())
 
 def write_chrom_h5(table, chrom_name, h5file):
     group = h5file.require_group("chromosomes").create_group(chrom_name)
@@ -186,29 +218,37 @@ def read_table_from(filename):
         return pickle.load(handle)
 
 
+def init():
+    global chroms
+    chroms = sorted(reference.sequence_sizes().items(),
+                    key=lambda x: x[1],
+                    reverse=True)
+
+
 def main():
+    init()
     start_time = time.time()
-    table = read_2bit("%s.2bit" % genome_name)
+    #table = read_2bit("%s.2bit" % genome_name)
     table_time = time.time()
-    write_table_to(table, "%s.index.pickle" % genome_name)
+    #write_table_to(table, "%s.index.pickle" % genome_name)
     write_table_time = time.time()
-    table = read_table_from("%s.index.pickle" % genome_name)
+    #table = read_table_from("%s.2bit.M10.Q10.index.hdf5" % genome_name)
     read_table_time = time.time()
     query = "GTAATCTTAGCACTTTGGGAGGCGGAGACGGATGTATCGCTTGAGCTCAGGAGTTGAAGACCAGCCTGGGCAACATACTGAGACTCCGTCTTGTATAATTTAATTAAAATTTAAAAAAAGAAGAGAAAAAGACCTGTGTT"
 
-    matchCount = 1
+    matchCount = 50
     matches = []
     for i in range(matchCount):
-        matches = match_dna(table, query)
-        print(matches)
+        # matches = match_dna(table, query)
+        matches = match_file("GRCh38_no_alts.2bit.M10.Q10.index.hdf5", query)
     match_time = time.time()
     print(matches)
 
     print("\n".join(
           ["Elapsed time:",
-           "Table creation: {}".format(table_time - start_time),
-           "Table writing:  {}".format(write_table_time - table_time),
-           "Table reading:  {}".format(read_table_time - write_table_time),
+           # "Table creation: {}".format(table_time - start_time),
+           # "Table writing:  {}".format(write_table_time - table_time),
+           # "Table reading:  {}".format(read_table_time - write_table_time),
            "Per query:    : {}".format(
                (match_time - read_table_time) / matchCount),
            ]))
