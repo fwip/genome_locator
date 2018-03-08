@@ -7,7 +7,7 @@ name = "pypi"
 
 [packages]
 
-twobitreader = "*"
+twobitreader = "==3.1.5"
 flask = "*"
 numpy = "==1.13.3"
 "h5py" = "*"
