@@ -13,11 +13,11 @@ def test_convert():
     search.write_tables_from_2bit("sample.2bit", outname=tmpfile)
 
     query = "TGGATTTCTGGTGCTTTCTACTCTGCCATATTCTCTGAATCCTCCTCTCTGGTTAAATATTTTTAAGGAATGCAGAGTCTGCAAACACCAACATTGCTGTGAACTGAGGTGTTGCTTTTTTTTTTTTTTTTAAGGAAAAAGGAAAAAAAAGATTAACATAACCACCTGTTTCTACTTGGAAGAAACTCTAGAGCGCAAATGCATTTAAAT"
-    matches = search.match_file(tmpfile, query)
-    assert len(matches) == 1
-    assert matches[0] == ("chr3", 71)
-    assert matches[0][1] == 71
-    assert matches[0][0] == "chr3"
+
+    for i in range(0, 12):
+        matches = search.match_file(tmpfile, query[i:])
+        assert len(matches) == 1
+        assert matches[0] == ("chr3", 71 + i)
 
 
 #def test_chrUn_lookup():

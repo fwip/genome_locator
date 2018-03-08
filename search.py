@@ -73,13 +73,9 @@ def write_tables_from_2bit(filename, outname=None):
     offset = 0
     master_table = defaultdict(list)
     for (chrom, length) in chroms:
-        print("Chrom", chrom)
-        #table = get_table_for_chrom(filename, chrom)
         create_hash_table(TwoBitFile(filename)[chrom], table=master_table, offset=offset)
-        #for (k, v) in table.items():
-            #master_table[k] += v
         print("Updated master table", elapsed())
-        offset += length / M
+        offset += length
         # outfile = "{}.M{}.Q{}.index.gz".format(chrom, M, Q)
         # write_table_to(table, outfile)
         # write_chrom_h5(table, chrom, h5_file)
@@ -158,12 +154,12 @@ def match_dna(table, query):
     if len(query) < M * Q:
         raise Exception("Query must be at least %d characters" % M * Q)
     all_candidates = []
-    for i in range(Q):
+    for i in range(M):
         key = encode(down_sample(query[i:])[:Q])
-        #for (chrom, subtable) in table.items():
         if key in table:
-            candidates = [deindex((x - i) * M) for x in table[key]]
-            all_candidates += candidates
+            for x in table[key]:
+                chrom, deindexed = deindex(x)
+                all_candidates.append((chrom, M*deindexed - i))
 
     return [
         (c[0], c[1] + 1)
@@ -189,6 +185,7 @@ def write_h5(table, h5file):
     group.create_dataset("positions", compression="gzip",
                          shuffle=True, data=table.positions)
     print("Wrote hdf5", elapsed())
+
 
 def write_chrom_h5(table, chrom_name, h5file):
     group = h5file.require_group("chromosomes").create_group(chrom_name)
@@ -227,9 +224,13 @@ def read_table_from(filename):
 
 def init():
     global chroms
-    chroms = sorted(reference.sequence_sizes().items(),
-                    key=lambda x: x[1],
-                    reverse=True)
+    chroms = [
+        (c, ((x + M-1)//M) - Q + 1)
+        for (c, x) in sorted(reference.sequence_sizes().items(),
+                             key=lambda x: x[1],
+                             reverse=True)
+    ]
+    print("Chroms", chroms)
 
 
 def main():
@@ -251,7 +252,7 @@ def main():
     Q = 10
     for i in range(matchCount):
         # matches = match_dna(table, query)
-        matches = match_file("GRCh38_no_alts.2bit.M10.Q10.index.hdf5", query)
+        matches = match_file("GRCh38_no_alts.2bit.M{}.Q{}.index.hdf5".format(M, Q), query)
     match_time = time.time()
     print(matches)
 
