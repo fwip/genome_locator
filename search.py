@@ -104,8 +104,8 @@ class GenomeSearcher():
         print("Created table", self.elapsed())
         return table
 
-    def down_sample(self, dna, step=M):
-        return dna[::step]
+    def down_sample(self, dna):
+        return dna[::self.M]
 
     def encode(self, dna):
         val = 0
@@ -165,21 +165,20 @@ class GenomeSearcher():
 
 
 def main(*args):
-
-    search = GenomeSearcher()
-    search.M = 10
-    search.Q = 10
+    M = 10
+    Q = 10
+    index_file = "GRCh38_no_alts.2bit.M{}.Q{}.index.hdf5".format(M, Q)
+    search = GenomeSearcher(M=M, Q=Q)
 
     read_table_time = time.time()
-    query = "GTAATCTTAGCACTTTGGGAGGCGGAGACGGATGTATCGCTTGAGCTCAGGAGTTGAAGACCAGCCTGGGCAACATACTGAGACTCCGTCTTGTATAATTTAATTAAAATTTAAAAAAAGAAGAGAAAAAGACCTGTGTT"
-    index_file = "GRCh38_no_alts.2bit.M{}.Q{}.index.hdf5".format(search.M, search.Q)
+    query = "GATTTGACTTTACCTTGAGCTTTGTCAGTTTACGATGCTATTTCAGTTTTGTGCTCAGATTTGAGTGATTGCAGGAAGAGAATAAATTTCTTTAATGCTGTCAAGACTTTAAATAGATACAGACAGAGCATTTTCACTTTTTCCTACATC"
     if len(args) > 1:
         print("Args", args)
         query = args[1]
     if len(args) > 2:
         index_file = args[2]
 
-    matchCount = 50
+    matchCount = 10
     matches = []
     for i in range(matchCount):
         matches = search.match_file(index_file, query)

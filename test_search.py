@@ -21,6 +21,19 @@ def test_convert():
         assert len(matches) == 1
         assert matches[0] == ("chr3", 71 + i)
 
+def test_alternate_params():
+    tmpfile = "scratch"
+    search = GenomeSearcher(reference_file="sample.2bit", M=3, Q=12)
+
+    search.write_tables_from_2bit("sample.2bit", outname=tmpfile)
+
+    query = "TGGATTTCTGGTGCTTTCTACTCTGCCATATTCTCTGAATCCTCCTCTCTGGTTAAATATTTTTAAGGAATGCAGAGTCTGCAAACACCAACATTGCTGTGAACTGAGGTGTTGCTTTTTTTTTTTTTTTTAAGGAAAAAGGAAAAAAAAGATTAACATAACCACCTGTTTCTACTTGGAAGAAACTCTAGAGCGCAAATGCATTTAAAT"
+
+    for i in range(0, 12):
+        matches = search.match_file(tmpfile, query[i:])
+        assert len(matches) == 1
+        assert matches[0] == ("chr3", 71 + i)
+
 
 #def test_chrUn_lookup():
 #    query = "TGTATGTTTTTCTATCTCCACACACTCCTGAACATAGAAAGACCAAGTAACATCCCTGGTTAAGATGTGTACAGGTTACAAGACATGTCTAAATATATTCACCAAGAGGTTTATT"
