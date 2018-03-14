@@ -168,27 +168,32 @@ def main(*args):
     M = 10
     Q = 10
     index_file = "GRCh38_no_alts.2bit.M{}.Q{}.index.hdf5".format(M, Q)
-    search = GenomeSearcher(M=M, Q=Q)
-
-    read_table_time = time.time()
-    query = "GATTTGACTTTACCTTGAGCTTTGTCAGTTTACGATGCTATTTCAGTTTTGTGCTCAGATTTGAGTGATTGCAGGAAGAGAATAAATTTCTTTAATGCTGTCAAGACTTTAAATAGATACAGACAGAGCATTTTCACTTTTTCCTACATC"
     if len(args) > 1:
         print("Args", args)
         query = args[1]
     if len(args) > 2:
         index_file = args[2]
+    if len(args) > 3:
+        M = int(args[3])
+    if len(args) > 4:
+        Q = int(args[4])
+    search = GenomeSearcher(M=M, Q=Q)
+
+    query = "GATTTGACTTTACCTTGAGCTTTGTCAGTTTACGATGCTATTTCAGTTTTGTGCTCAGATTTGAGTGATTGCAGGAAGAGAATAAATTTCTTTAATGCTGTCAAGACTTTAAATAGATACAGACAGAGCATTTTCACTTTTTCCTACATC"
 
     matchCount = 10
     matches = []
+    print("Matches:", search.match_file(index_file, query))
+    init_time = time.time()
     for i in range(matchCount):
-        matches = search.match_file(index_file, query)
+        search.match_file(index_file, query)
     match_time = time.time()
     print(matches)
 
     print("\n".join(
           ["Elapsed time:",
            "Per query:    : {}".format(
-               (match_time - read_table_time) / matchCount),
+               (match_time - init_time) / matchCount),
            ]))
 
 
