@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 
 from twobitreader import TwoBitFile
-import search
+from search import GenomeSearcher
 import random
 
-search.reference = TwoBitFile("sample.2bit")
 
 index = "sample.2bit.M10.Q10.index.hdf5"
 
 
 def test_convert():
     tmpfile = "scratch"
+    search = GenomeSearcher(reference_file="sample.2bit")
+
     search.write_tables_from_2bit("sample.2bit", outname=tmpfile)
 
     query = "TGGATTTCTGGTGCTTTCTACTCTGCCATATTCTCTGAATCCTCCTCTCTGGTTAAATATTTTTAAGGAATGCAGAGTCTGCAAACACCAACATTGCTGTGAACTGAGGTGTTGCTTTTTTTTTTTTTTTTAAGGAAAAAGGAAAAAAAAGATTAACATAACCACCTGTTTCTACTTGGAAGAAACTCTAGAGCGCAAATGCATTTAAAT"
@@ -37,6 +38,7 @@ def test_convert():
 
 def test_random_lookup():
     index = "sample.2bit.M10.Q10.index.hdf5"
+    search = GenomeSearcher(reference_file="sample.2bit")
     random.seed(9001)
     tbf = TwoBitFile("sample.2bit")
     min_length = 100

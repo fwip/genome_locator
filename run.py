@@ -2,7 +2,7 @@
 from flask import Flask, request, jsonify
 from twobitreader import TwoBitFile
 
-import search
+from search import GenomeSearcher
 
 app = Flask(__name__)
 
@@ -15,6 +15,7 @@ def search_for_needle():
     query = ""
     if 'query' in request.args:
         query = request.args['query']
+    search = GenomeSearcher(reference_file="GRCh38_no_alts.2bit")
     return jsonify([{
         "chromosome": match[0],
         "start": match[1],

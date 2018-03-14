@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
 
 import sys
-import search
-from twobitreader import TwoBitFile
+from search import GenomeSearcher
 
 
 def main(infile, M, Q):
-    search.M = M
-    search.Q = Q
-    search.reference = TwoBitFile(infile)
+    search = GenomeSearcher(reference_file=infile, M=M, Q=Q)
 
     search.write_tables_from_2bit(infile)
 
