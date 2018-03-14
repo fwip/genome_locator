@@ -2,10 +2,11 @@
 
 from twobitreader import TwoBitFile
 import search
+import random
 
 search.reference = TwoBitFile("sample.2bit")
 
-index = "sample.2bit.M10.Q10.index"
+index = "sample.2bit.M10.Q10.index.hdf5"
 
 
 def test_convert():
@@ -28,10 +29,28 @@ def test_convert():
 #    assert matches[0][0] == "chrUn_GL000218v1"
 
 
-# def test_lookup_bench_M10_Q10(benchmark):
-#     index = "GRCh38_no_alts.2bit.M10.Q10.index.hdf5"
-#     query = "TGTATGTTTTTCTATCTCCACACACTCCTGAACATAGAAAGACCAAGTAACATCCCTGGTTAAGATGTGTACAGGTTACAAGACATGTCTAAATATATTCACCAAGAGGTTTATT"
-#     benchmark(search.match_file, index, query)
+#def test_lookup_bench_M10_Q10(benchmark):
+#    index = "GRCh38_no_alts.2bit.M10.Q10.index.hdf5"
+#    query = "TGTATGTTTTTCTATCTCCACACACTCCTGAACATAGAAAGACCAAGTAACATCCCTGGTTAAGATGTGTACAGGTTACAAGACATGTCTAAATATATTCACCAAGAGGTTTATT"
+#    benchmark(search.match_file, index, query)
+
+
+def test_random_lookup():
+    index = "sample.2bit.M10.Q10.index.hdf5"
+    random.seed(9001)
+    tbf = TwoBitFile("sample.2bit")
+    min_length = 100
+    max_length = 120
+    sizes = tbf.sequence_sizes()
+    for i in range(0, 100):
+        chrom = random.choice(list(sizes.keys()))
+        length = random.randint(min_length, max_length)
+        pos = random.randrange(sizes[chrom]-length-1)
+        query = tbf[chrom][pos:pos+length]
+        matches = search.match_file(index, query)
+        assert (chrom, pos+1) in matches
+
+
 # 
 # def test_lookup_bench_M10_Q10_nozip(benchmark):
 #     index = "GRCh38_no_alts.2bit.M10.Q10.index.hdf5.nocompress"
