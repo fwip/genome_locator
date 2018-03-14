@@ -62,36 +62,15 @@ class GenomeSearcher():
         self.last_time = new_time
         return diff
 
-    def read_2bit(self, filename):
-        table = {}
-        tbf = TwoBitFile(filename)
-        for (chrom, dna) in tbf.items():
-            print("Chrom:", chrom, self.elapsed())
-            table[chrom] = self.get_table_for_chrom(filename, chrom)
-
-        return table
-
-    def get_table_for_chrom(self, filename, chrom, offset):
-        tbf = TwoBitFile(filename)
-        table = self.create_hash_table(tbf[chrom], offset)
-        lh = LookupHash(table)
-        print("Converted to lookuphash", self.elapsed())
-        return lh
-
     def write_tables_from_2bit(self, filename, outname=None):
-        # tbf = TwoBitFile(filename)
         if outname is None:
             outname = "{}.M{}.Q{}.index.hdf5".format(filename, self.M, self.Q)
-        # for (chrom, dna) in tbf.items():
         offset = 0
         master_table = defaultdict(list)
         for (chrom, length) in self.chroms:
             self.create_hash_table(TwoBitFile(filename)[chrom], table=master_table, offset=offset)
             print("Updated master table", self.elapsed())
             offset += length
-            # outfile = "{}.M{}.Q{}.index.gz".format(chrom, M, Q)
-            # write_table_to(table, outfile)
-            # write_chrom_h5(table, chrom, h5_file)
         lh = LookupHash(table=master_table)
         print("Created lookup hash", self.elapsed())
         h5_file = h5py.File(outname, "w")
@@ -137,12 +116,7 @@ class GenomeSearcher():
 
     def match_file(self, filename, query):
         f = h5py.File(filename)
-        #chroms = f['chromosomes']
         table = LookupHash(h5_group=f['index'])
-        #table = {
-        #    chrom: LookupHash(h5_group=chroms[chrom])
-        #    for chrom in chroms.keys()
-        #}
         results = self.match_dna(table, query)
         f.close()
         return results
@@ -166,7 +140,6 @@ class GenomeSearcher():
                     chrom, deindexed = self.deindex(x)
                     all_candidates.append((chrom, self.M*deindexed - i))
 
-        print("Candidates", all_candidates)
         return [
             (c[0], c[1] + 1)
             for c in all_candidates
@@ -178,7 +151,6 @@ class GenomeSearcher():
         chrom = position[0]
         idx = position[1]
         ref = self.reference[chrom][idx:idx + len(query)]
-        print("r==q?", ref, query)
         return ref == query
 
     def write_h5(self, table, h5file):
@@ -190,38 +162,6 @@ class GenomeSearcher():
         group.create_dataset("positions", compression="gzip",
                              shuffle=True, data=table.positions)
         print("Wrote hdf5", self.elapsed())
-
-    def write_chrom_h5(self, table, chrom_name, h5file):
-        group = h5file.require_group("chromosomes").create_group(chrom_name)
-        group.create_dataset("offsets", compression="gzip",
-                             shuffle=True, data=table.offsets)
-        group.create_dataset("counts", compression="gzip",
-                             shuffle=True, data=table.counts)
-        group.create_dataset("positions", compression="gzip",
-                             shuffle=True, data=table.positions)
-        print("Wrote hdf5", self.elapsed())
-
-    def write_table_to(self, table, filename):
-        print("Writing to", filename)
-        with gzip.open(filename, 'wb') as handle:
-            dump = pickle.dumps(table)
-            print("Dumped", self.elapsed())
-            optimized = pickletools.optimize(dump)
-            print("Optimized", self.elapsed())
-            handle.write(optimized)
-            print("Wrote", self.elapsed())
-
-    def read_table_from_h5(self, filename):
-        chroms = h5py.File(filename)['chromosomes']
-        return {
-            chrom: LookupHash(h5_group=chroms[chrom])
-            for chrom in chroms.keys()
-        }
-
-    def read_table_from(self, filename):
-        with gzip.open(filename, 'rb') as handle:
-            return pickle.load(handle)
-
 
 
 def main(*args):
@@ -242,16 +182,12 @@ def main(*args):
     matchCount = 50
     matches = []
     for i in range(matchCount):
-        # matches = match_dna(table, query)
         matches = search.match_file(index_file, query)
     match_time = time.time()
     print(matches)
 
     print("\n".join(
           ["Elapsed time:",
-           # "Table creation: {}".format(table_time - start_time),
-           # "Table writing:  {}".format(write_table_time - table_time),
-           # "Table reading:  {}".format(read_table_time - write_table_time),
            "Per query:    : {}".format(
                (match_time - read_table_time) / matchCount),
            ]))
