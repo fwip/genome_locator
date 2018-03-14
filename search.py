@@ -230,10 +230,14 @@ def init():
                              key=lambda x: x[1],
                              reverse=True)
     ]
-    print("Chroms", chroms)
 
 
-def main():
+def main(*args):
+    global M
+    global Q
+    M = 10
+    Q = 10
+
     init()
     start_time = time.time()
     #table = read_2bit("%s.2bit" % genome_name)
@@ -243,16 +247,18 @@ def main():
     #table = read_table_from("%s.2bit.M10.Q10.index.hdf5" % genome_name)
     read_table_time = time.time()
     query = "GTAATCTTAGCACTTTGGGAGGCGGAGACGGATGTATCGCTTGAGCTCAGGAGTTGAAGACCAGCCTGGGCAACATACTGAGACTCCGTCTTGTATAATTTAATTAAAATTTAAAAAAAGAAGAGAAAAAGACCTGTGTT"
+    index_file = "GRCh38_no_alts.2bit.M{}.Q{}.index.hdf5".format(M, Q)
+    if len(args) > 1:
+        print("Args", args)
+        query = args[1]
+    if len(args) > 2:
+        index_file = args[2]
 
     matchCount = 50
     matches = []
-    global M
-    global Q
-    M = 10
-    Q = 10
     for i in range(matchCount):
         # matches = match_dna(table, query)
-        matches = match_file("GRCh38_no_alts.2bit.M{}.Q{}.index.hdf5".format(M, Q), query)
+        matches = match_file(index_file, query)
     match_time = time.time()
     print(matches)
 
@@ -267,4 +273,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    main(sys.argv)
