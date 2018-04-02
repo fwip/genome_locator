@@ -47,69 +47,40 @@ class LookupHash(object):
         return numpy.zeros((length,), dtype=typ)
 
     def import_table(self, table):
+
+        key_set = set([row[0, 0] for row in table])
+        # Sort
+        table = table[table[:, 0].argsort(axis=0)][:, 0, :]
+
+        key_set2 = set([row[0, 0] for row in table])
+        assert key_set == key_set2
+        last_key = -1
+        for row in table:
+            key = row[0,0]
+            assert last_key <= key
+            last_key = key
+
+        list_len = table.shape[0]
+        array_len = int(max(key_set) + 1)
+        len_max = 2 ** 60
+
+        self.positions = table[:, 1].A1
+
+        self.offsets = LookupHash.init_array(array_len, list_len)
+        self.counts = LookupHash.init_array(array_len, len_max)
+
         offset = 0
-        list_len = sum(len(v) for v in table.values())
-        max_list = max(max(v) for v in table.values())
-        array_len = max(table.keys()) + 1
-        len_max = max(len(v) for v in table.values())
-
-        self.positions = LookupHash.init_array(list_len, max_list)
-
-        # If we've got very sparse buckets, dicts will be more size-optimal
-        occupancy = 1.0 * len(table.keys()) / array_len
-        print("Occupancy is", occupancy)
-        print("position len is", list_len)
-        print("offset len is", array_len)
-        print("Avg bucket count is", list_len / len(table.keys()))
-        if False and occupancy < 0.25:
-            self.offsets = {}
-            self.counts = {}
-        else:
-            self.offsets = LookupHash.init_array(array_len, list_len)
-            self.counts = LookupHash.init_array(array_len, len_max)
-
-        for (key, value) in table.items():
-            entry_count = len(value)
-            self.offsets[key] = offset
-            self.counts[key] = entry_count
-            self.positions[offset:offset+entry_count] = value
-            offset += entry_count
-
-
-#    @staticmethod
-#    def pack(subtable):
-#        new_dict = {}
-#        offset = 0
-#        list_len = sum(len(v) for v in subtable.values())
-#        array_len = max(subtable.keys()) + 1
-#        offsets = numpy.zeros((array_len,), dtype=numpy.uint32)
-#        counts = numpy.zeros((array_len,), dtype=numpy.uint32)
-#
-#        # Try smaller bins
-#        # max_count = max(len(v) for v in subtable.values())
-#        # if max_count < 2**16:
-#        #     counts = numpy.zeros((array_len,), dtype=numpy.uint16)
-#        # if max_count < 2**8:
-#        #     counts = numpy.zeros((array_len,), dtype=numpy.uint8)
-#
-#        # print(list_len)
-#        location_list = bytearray(4 * list_len)
-#        for (key, value) in subtable.items():
-#            entry_count = len(value)
-#            offsets[key] = offset
-#            counts[key] = entry_count
-#            new_dict[key] = struct.pack('2I', offset, entry_count)
-#            struct.pack_into('{}I'.format(entry_count),
-#                             location_list, offset, *value)
-#            offset += entry_count * 4
-#
-#        # key_count = len(new_dict)
-#        # print("{buckets} buckets, {positions} positions: {avg} Avg positions, {size}MB Approx size, {bucketperc}% buckets filled".format(
-#        #     buckets=key_count,
-#        #     positions=list_len,
-#        #     avg=list_len / key_count,
-#        #     size=((24 + 24 + 16) * key_count + (4 * list_len)) / 1000000,
-#        #     bucketperc=100 * key_count / max(new_dict.keys()),
-#        # ))
-#
-#        return (new_dict, location_list, offsets, counts)
+        last_key = 0
+        count = 0
+        for row in table:
+            key = row[0, 0]
+            if key != last_key:
+                self.offsets[last_key] = offset - count
+                self.counts[last_key] = count
+                last_key = key
+                count = 0
+            count += 1
+            offset += 1
+        if count:
+            self.offsets[key] = offset - count
+            self.counts[key] = count

@@ -12,10 +12,7 @@
 from collections import defaultdict
 from twobitreader import TwoBitFile
 import h5py
-
-import gzip
-import pickle
-import pickletools
+import numpy
 import time
 
 from lookup_hash import LookupHash
@@ -67,8 +64,17 @@ class GenomeSearcher():
             outname = "{}.M{}.Q{}.index.hdf5".format(filename, self.M, self.Q)
         offset = 0
         master_table = defaultdict(list)
+        master_table = [None for _ in range(4**self.Q)]
+        # max_len = sum(l for _, l in self.chroms)
+        master_table = numpy.zeros((0, 2), dtype=numpy.uint64)
         for (chrom, length) in self.chroms:
-            self.create_hash_table(TwoBitFile(filename)[chrom], table=master_table, offset=offset)
+            tbl = self.create_hash_table(
+                TwoBitFile(filename)[chrom],
+                table=master_table,
+                offset=offset,
+                length=length)
+            t = numpy.matrix(tbl, dtype=numpy.uint64)
+            master_table = numpy.concatenate((master_table, t))
             print("Updated master table", self.elapsed())
             offset += length
         lh = LookupHash(table=master_table)
@@ -82,9 +88,10 @@ class GenomeSearcher():
         k += (self.base_lookup[new_letter] << (self.Q * 2))
         return k >> 2
 
-    def create_hash_table(self, dna, table=None, offset=0):
+    def create_hash_table(self, dna, table=None, offset=0, length=0):
         if table is None:
             table = defaultdict(list)
+        tbl = []
 
         dna = str(dna)
         print("Read dna", self.elapsed())
@@ -98,11 +105,11 @@ class GenomeSearcher():
                 else:
                     k = self.rotate_key(k, key[-1])
 
-                table[k].append(i+offset)
+                tbl.append((k, (i+offset)))
             else:
                 k = None
         print("Created table", self.elapsed())
-        return table
+        return tbl
 
     def down_sample(self, dna):
         return dna[::self.M]
@@ -134,7 +141,10 @@ class GenomeSearcher():
             raise Exception("Query must be at least %d characters" % (self.M * self.Q))
         all_candidates = []
         for i in range(self.M):
-            key = self.encode(self.down_sample(query[i:])[:self.Q])
+            long_sample = query[i:]
+            down_sample = self.down_sample(long_sample)
+            substr = self.down_sample(query[i:])[:self.Q]
+            key = self.encode(substr)
             if key in table:
                 for x in table[key]:
                     chrom, deindexed = self.deindex(x)
