@@ -18,3 +18,4 @@ pyopenssl = "*"
 
 pytest = "*"
 pytest-benchmark = "*"
+hypothesis = "*"
