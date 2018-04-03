@@ -65,16 +65,17 @@ class GenomeSearcher():
         offset = 0
         master_table = defaultdict(list)
         master_table = [None for _ in range(4**self.Q)]
-        # max_len = sum(l for _, l in self.chroms)
-        master_table = numpy.zeros((0, 2), dtype=numpy.uint64)
+        master_table = numpy.zeros(
+            (sum(l for _, l in self.chroms), 2),
+            dtype=numpy.uint64)
+        tbl_len = 0
         for (chrom, length) in self.chroms:
-            tbl = self.create_hash_table(
+            sub_table = master_table[tbl_len:]
+            tbl_len += self.create_hash_table(
                 TwoBitFile(filename)[chrom],
-                table=master_table,
+                table=sub_table,
                 offset=offset,
                 length=length)
-            t = numpy.matrix(tbl, dtype=numpy.uint64)
-            master_table = numpy.concatenate((master_table, t))
             print("Updated master table", self.elapsed())
             offset += length
         lh = LookupHash(table=master_table)
@@ -91,11 +92,11 @@ class GenomeSearcher():
     def create_hash_table(self, dna, table=None, offset=0, length=0):
         if table is None:
             table = defaultdict(list)
-        tbl = []
 
         dna = str(dna)
         print("Read dna", self.elapsed())
         reduced = self.down_sample(dna)
+        values = 0
         k = None
         for i in range(len(reduced) - self.Q + 1):
             key = reduced[i:i + self.Q]
@@ -105,11 +106,12 @@ class GenomeSearcher():
                 else:
                     k = self.rotate_key(k, key[-1])
 
-                tbl.append((k, (i+offset)))
+                table[values] = (k, (i+offset))
+                values += 1
             else:
                 k = None
         print("Created table", self.elapsed())
-        return tbl
+        return values
 
     def down_sample(self, dna):
         return dna[::self.M]

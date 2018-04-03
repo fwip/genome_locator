@@ -48,15 +48,15 @@ class LookupHash(object):
 
     def import_table(self, table):
 
-        key_set = set([row[0, 0] for row in table])
+        key_set = set([row[0] for row in table])
         # Sort
-        table = table[table[:, 0].argsort(axis=0)][:, 0, :]
+        table = table[table.argsort(axis=0)][:, 0, :]
 
-        key_set2 = set([row[0, 0] for row in table])
+        key_set2 = set([row[0] for row in table])
         assert key_set == key_set2
         last_key = -1
         for row in table:
-            key = row[0,0]
+            key = row[0]
             assert last_key <= key
             last_key = key
 
@@ -64,7 +64,7 @@ class LookupHash(object):
         array_len = int(max(key_set) + 1)
         len_max = 2 ** 60
 
-        self.positions = table[:, 1].A1
+        self.positions = table[:, 1]
 
         self.offsets = LookupHash.init_array(array_len, list_len)
         self.counts = LookupHash.init_array(array_len, len_max)
@@ -73,7 +73,10 @@ class LookupHash(object):
         last_key = 0
         count = 0
         for row in table:
-            key = row[0, 0]
+            key = row[0]
+            if False:
+                pos = row[1]
+                assert self.positions[offset] == pos
             if key != last_key:
                 self.offsets[last_key] = offset - count
                 self.counts[last_key] = count
