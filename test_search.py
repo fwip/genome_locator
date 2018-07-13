@@ -30,7 +30,7 @@ def check_region(ref, chrom, pos, length):
 
     search.write_tables_from_2bit(ref, outname=tmpfile)
 
-    tbf = TwoBitFile("sample.2bit")
+    tbf = TwoBitFile(ref)
     query = tbf[chrom][pos:pos+length]
     matches = search.match_file(tmpfile, query)
     assert (chrom, pos+1) in matches
