@@ -180,6 +180,7 @@ def main(*args):
     M = 10
     Q = 10
     index_file = "GRCh38_no_alts.2bit.M{}.Q{}.index.hdf5".format(M, Q)
+    query = "GATTTGACTTTACCTTGAGCTTTGTCAGTTTACGATGCTATTTCAGTTTTGTGCTCAGATTTGAGTGATTGCAGGAAGAGAATAAATTTCTTTAATGCTGTCAAGACTTTAAATAGATACAGACAGAGCATTTTCACTTTTTCCTACATC"
     if len(args) > 1:
         print("Args", args)
         query = args[1]
@@ -190,8 +191,6 @@ def main(*args):
     if len(args) > 4:
         Q = int(args[4])
     search = GenomeSearcher(M=M, Q=Q)
-
-    query = "GATTTGACTTTACCTTGAGCTTTGTCAGTTTACGATGCTATTTCAGTTTTGTGCTCAGATTTGAGTGATTGCAGGAAGAGAATAAATTTCTTTAATGCTGTCAAGACTTTAAATAGATACAGACAGAGCATTTTCACTTTTTCCTACATC"
 
     matchCount = 10
     matches = []
@@ -211,4 +210,4 @@ def main(*args):
 
 if __name__ == "__main__":
     import sys
-    main(sys.argv)
+    main(*sys.argv)
